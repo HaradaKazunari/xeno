@@ -94,6 +94,9 @@ io.sockets.on('connection', function(socket) {
             for(var i=0; i<ids.length; i++){
               if(ids[i] == socket.id){
                 ids.splice(i,1);
+                console.log(socket.id);
+                console.log(ids);
+
               }
             }
         }
