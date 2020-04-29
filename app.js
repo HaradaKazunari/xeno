@@ -13,11 +13,27 @@ function shuffle(array) {
   return array;
 }
 
-var card = [1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10];
-var yamahuda = shuffle(card);
-var tensei = yamahuda.shift();
+
+// var card = [1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10];
+var yamahuda = shuffle([1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10]);
+var tensei;
 var first_turn = Math.floor(Math.random() * 2);
+var turn = first_turn;
 var first = '<h3> first turn </h3>';
+
+
+function set(){
+  yamahuda = shuffle([1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10]);
+  first_turn = Math.floor(Math.random() * 2);
+  turn = first_turn;
+  tensei = draw();
+  console.log(tensei);
+}
+
+function draw(){
+  return yamahuda.shift();
+}
+
 
  
 app.set('port', (process.env.PORT || 5000));
@@ -70,18 +86,26 @@ io.sockets.on('connection', function(socket) {
 
         // first turn step
         if(ids.length == 2){
+          set();
+
+          p0 = draw();
+          p1 = draw();
+
+          console.log(yamahuda);
+          console.log(p0);
+          console.log(p1);
+
 
           if(first_turn == 0){
-            io.to(ids[0]).emit('server_to_client_card',{value : yamahuda.shift()});
+            io.to(ids[0]).emit('server_to_client_card',{value : p0});
             io.to(ids[0]).emit('server_to_client', {value : first});
-            io.to(ids[1]).emit('server_to_client_card',{value : yamahuda.shift()});
+            io.to(ids[1]).emit('server_to_client_card',{value : p1});
           }else{
-            io.to(ids[0]).emit('server_to_client_card',{value : yamahuda.shift()});
-            io.to(ids[1]).emit('server_to_client_card',{value : yamahuda.shift()});
+            io.to(ids[0]).emit('server_to_client_card',{value : p0});
+            io.to(ids[1]).emit('server_to_client_card',{value : p1});
             io.to(ids[1]).emit('server_to_client',{value : first});
           }
 
-          console.log(yamahuda);
         } 
     });
     // S09. dicconnectイベントを受信し、退出メッセージを送信する
@@ -94,8 +118,6 @@ io.sockets.on('connection', function(socket) {
             for(var i=0; i<ids.length; i++){
               if(ids[i] == socket.id){
                 ids.splice(i,1);
-                console.log(socket.id);
-                console.log(ids);
               }
             }
         }
