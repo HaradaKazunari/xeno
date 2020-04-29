@@ -36,7 +36,7 @@ http.listen(app.get('port'), function(){
 //
 io.sockets.on('connection', function(socket) {
     var room = '';
-    var name = '';
+    var name ;
 
     
     // card を場に出す
@@ -86,7 +86,7 @@ io.sockets.on('connection', function(socket) {
     });
     // S09. dicconnectイベントを受信し、退出メッセージを送信する
     socket.on('disconnect', function() {
-        if (name == '') {
+        if (name == null) {
             console.log("未入室のまま、どこかへ去っていきました。");
         } else {
             var endMessage = name + "さんが退出しました。"
@@ -96,7 +96,6 @@ io.sockets.on('connection', function(socket) {
                 ids.splice(i,1);
                 console.log(socket.id);
                 console.log(ids);
-
               }
             }
         }
