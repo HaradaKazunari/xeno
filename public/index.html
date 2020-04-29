@@ -23,6 +23,11 @@
           margin-left: 33%;
         }
 
+        #player,#aite{
+          width: 70%;
+          margin: 0 auto;
+        }
+
         #player_drop,#aite_drop{
           width:100%;
           height:107px;
@@ -91,7 +96,6 @@
           var card = data.value;
           img_count += 1;
           $("#aite").append('<img src="img/ura.png" alt="">');
-          $("#yamahuda").append('<div class="text-center">転生</div>')
           $("#yamahuda").append('<img src="img/ura.png" id="tensei"  alt="">');
           $("#player").append('<img src="img/' + card + '.jpg" id="' + card  + '" class="player_card">');
         });
