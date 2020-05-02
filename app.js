@@ -13,28 +13,39 @@ function shuffle(array) {
   return array;
 }
 
-
-// var card = [1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10];
-var yamahuda = shuffle([1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10]);
+//xeno用変数
+var yamahuda;
+var sutehuda = [];
+var tehuda = [];
+var turn;
+var drow;
 var tensei;
-var first_turn = Math.floor(Math.random() * 2);
-var turn = first_turn;
-var first = '<h3> first turn </h3>';
+var set_number = [1,2,3,4,5,6,7,8,9,10];
+var turn_text = "<h3> Your turn </h3>";
 
+var efecto = false;
+var efecto_4 = false;
+var efecto_4_check;
+var efecto_6_check;
+var efecto_7;
+var efecto_7_check = false;
+var efecto_7_1;
+var efecto_7_2;
+var efecto_7_3;
 
 function set(){
   yamahuda = shuffle([1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10]);
-  first_turn = Math.floor(Math.random() * 2);
-  turn = first_turn;
-  tensei = draw();
-  console.log(tensei);
+  sutehuda = [];
+  tehuda = [];
+  turn = Math.floor(Math.random() * 2);
+  tensei = yamahuda.shift();
+  efecto = false;
+  efecto_4 = false;
+  efecto_4_check = 0;
+  efecto_6_check = 0;
+  efecto_7 = [];
+  efecto_7_check = false;
 }
-
-function draw(){
-  return yamahuda.shift();
-}
-
-
  
 app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
@@ -46,26 +57,307 @@ app.get('/', function(request, response) {
 http.listen(app.get('port'), function(){
   console.log('listening on *:' + app.get('port'));
 })
-// app.listen(app.get('port'), function() {
-//   console.log("Node app is running at localhost:" + app.get('port'));
-// });
-//
-io.sockets.on('connection', function(socket) {
-    var room = '';
-    var name ;
 
-    
-    // card を場に出す
-    socket.on('client_to_server_card_drop', function(data){
-      io.to(socket.id).emit('server_to_client_card_drop_player', {value : data.value});
-      socket.broadcast.to(room).emit('server_to_client_card_drop_aite',{value : data.value});
+io.sockets.on('connection', function(socket) {
+    var name;
+    var room;
+
+    function turn_draw(){
+      turn = turn == 0 ? 1 : 0;
+      if( efecto_7[0] == turn ){
+        efecto_7_1 = yamahuda.shift();
+        efecto_7_2 = yamahuda.shift();
+        efecto_7_3 = yamahuda.shift();
+
+        efecto_7 = {efecto_7_1,efecto_7_2,efecto_7_3};
+        io.to(ids[turn]).emit('server_to_client_7',{value : efecto_7});
+
+      }else{
+        drow = yamahuda.shift();
+
+        socket.broadcast.to(room).emit('server_to_client_drowi_enemy');
+        io.to(ids[turn]).emit('server_to_client_drow',{value : drow});
+        io.to(ids[turn]).emit('server_to_client_turn',{value : turn_text});
+      }
+    }
+
+    function sutehuda_card_check(card_id){
+      var card_count = 0;
+      for(var i=0; i<sutehuda.length; i++){
+        if(sutehuda[i] == card_id){
+          card_count += 1;
+        }
+      }  
+      if(card_count == 2){
+        return true;
+      }else{
+        return false;
+      }
+    }
+
+    //カードを場に出す
+    socket.on('client_to_server_drop',function(data){
+      if(ids[turn] == socket.id && data.value != 10 && efecto == false){
+        var drop_id = data.value;
+
+        if(drop_id == tehuda[turn]){
+          tehuda[turn] = drow;
+        }
+
+        sutehuda.push(drop_id);
+
+        io.to(socket.id).emit('server_to_client_my_card_drop',{value : drop_id, tehuda : tehuda[turn]});
+        socket.broadcast.to(room).emit('server_to_client_drop',{value : drop_id});
+
+        if(efecto_4 == true){
+          efecto_4_check += 1;
+          if(efecto_4_check == 2){
+            efecto_4 = false;
+            efecto_4_check = 0;
+          }
+        }
+
+        if(drop_id == 1 && efecto_4 == false){
+          //皇帝
+          var jud = sutehuda_card_check(drop_id);
+            if(jud == true){
+              drow = yamahuda.shift();
+
+              var t = turn == 0 ? 1:0;
+              io.to(socket.id).emit('server_to_client_1',{tehuda1 : tehuda[t], tehuda2 : drow})
+              io.to(ids[t]).emit('server_to_client_drow',{value : drow});
+              
+              efecto = true;
+            }
+
+        }else if(drop_id == 2 && efecto_4 == false){
+          //捜査
+          io.to(ids[turn]).emit('server_to_client_2');
+          efecto = true;
+
+        }else if(drop_id == 3 && efecto_4 == false){
+          //透視
+          var i = turn == 0 ? 1:0;
+          io.to(ids[turn]).emit('server_to_client_3',{value : tehuda[i]});
+          efecto = true;
+          
+        }else if(drop_id == 4){
+          //守護
+          efecto_4 = true;
+          efecto_4_check = 0;
+
+        }else if(drop_id == 5 && efecto_4 == false){
+          //疫病
+          drow = yamahuda.shift();
+
+          var t = turn == 0 ? 1:0;
+          io.to(socket.id).emit('server_to_client_5',{tehuda1 : tehuda[t], tehuda2 : drow})
+          io.to(ids[t]).emit('server_to_client_drow',{value : drow});
+          
+          efecto = true;
+
+        }else if(drop_id == 6 && efecto_4 == false){
+          //対決
+          var drop_6 = 1;
+          var jud = sutehuda_card_check(drop_id);
+            if(jud == true){
+              yamahuda = []
+              drop_6 = 2;
+            }
+
+          var t = turn == 0 ? 1:0;
+          io.to(ids[turn]).emit('server_to_client_6',{value : tehuda[t], hantei:drop_6})
+          io.to(ids[t]).emit('server_to_client_6',{value : tehuda[turn], hantei:drop_6});
+
+
+          efecto = true;
+
+        }else if(drop_id == 7){
+          //賢者
+          efecto_7 = [turn];
+
+
+        }else if(drop_id == 8 && efecto_4 == false){
+          //精霊
+          tehuda.push(tehuda.shift());
+          var i = turn == 0 ? 1:0;
+          io.to(ids[turn]).emit('server_to_client_8',{value : tehuda[turn]});
+          io.to(ids[i]).emit('server_to_client_8',{value : tehuda[i]});
+
+        }else if(drop_id == 9 && efecto_4 == false){
+          //皇帝
+          drow = yamahuda.shift();
+
+          var t = turn == 0 ? 1:0;
+          io.to(socket.id).emit('server_to_client_9',{tehuda1 : tehuda[t], tehuda2 : drow})
+          io.to(ids[t]).emit('server_to_client_drow',{value : drow});
+          
+          efecto = true;
+
+        }
+
+        if(yamahuda.length > 0 && efecto == false){
+          turn_draw();
+        }
+
+      }
     });
 
- 
+    //カード効果1,5終了
+    socket.on('client_to_server_1', function(data){
+      efecto = false;
+      var drop_id = data.value;
+      var i = turn == 0 ? 1:0;
+
+      function drop(drop){
+        sutehuda.push(drop);
+        io.to(ids[i]).emit('server_to_client_my_card_drop',{value : drop, tehuda : tehuda[i]});
+        io.to(ids[turn]).emit('server_to_client_drop',{value : drop});
+
+      }
+
+      if(drop_id == tehuda[i]){
+        tehuda[i] = drow;
+      }
+      drop(drop_id);
+
+      if(drop_id == 10){
+        drop(tehuda[i]);
+        tehuda[i] = tensei;
+        io.to(ids[i]).emit('server_to_client_tensei',{value : tensei});
+      }
+
+      io.to(ids[turn]).emit('server_to_client_1_comp');
+      if(yamahuda.length > 0){
+        turn_draw();
+      }
+    });
+
+    socket.on('client_to_server_2',function(data){
+      efecto = false;
+      var select = data.value;
+      var i = turn == 0 ? 1:0;
+      
+
+      if(tehuda[i] == select){
+        if(select == 10){
+          drop(tehuda[i]);
+          tehuda[i] = tensei;
+          io.to(ids[i]).emit('server_to_client_tensei',{value : tensei});
+        }else{
+          yamahuda = [];
+          io.to(ids[turn]).emit('server_to_client_2_comp',{value : tehuda[i]});
+          io.to(ids[i]).emit('server_to_client_2_comp',{value : tehuda[turn]});
+        }
+      }
+
+      if(yamahuda.length > 0){
+        turn_draw();
+      }
+
+    });
+
+     //カード効果3終了
+    socket.on('client_to_server_3',function(){
+      efecto = false;
+      turn_draw();
+    });
+
+  //カード効果6終了
+  socket.on('client_to_server_6',function(){
+    efecto_6_check += 1;
+    if(efecto_6_check == 2){
+      efecto = false;
+      turn_draw();
+    }
+  });
+
+  //カード効果7終了
+  socket.on('client_to_server_7',function(data){
+    efecto_7_check = true;
+    var selected = data.value;
+
+    if(selected == 1){
+      drow = efecto_7.efecto_7_1;
+      yamahuda.unshift(efecto_7.efecto_7_3);
+      yamahuda.unshift(efecto_7.efecto_7_2);
+    }else if(selected == 2){
+      drow = efecto_7.efecto_7_2;
+      yamahuda.unshift(efecto_7.efecto_7_3);
+      yamahuda.unshift(efecto_7.efecto_7_1);
+    }else if(selected == 3){
+      drow = efecto_7.efecto_7_3;
+      yamahuda.unshift(efecto_7.efecto_7_2);
+      yamahuda.unshift(efecto_7.efecto_7_1);
+    }
+
+
+    socket.broadcast.to(room).emit('server_to_client_drowi_enemy');
+    io.to(ids[turn]).emit('server_to_client_drow',{value : drow});
+    io.to(ids[turn]).emit('server_to_client_turn',{value : turn_text});
+
+  });
+
+    //カード効果9終了
+    socket.on('client_to_server_9', function(data){
+      efecto = false;
+      var drop_id = data.value;
+      var i = turn == 0 ? 1:0;
+
+      function drop(drop){
+        sutehuda.push(drop);
+        io.to(ids[i]).emit('server_to_client_my_card_drop',{value : drop, tehuda : tehuda[i]});
+        io.to(ids[turn]).emit('server_to_client_drop',{value : drop});
+      }
+
+      if(drop_id == tehuda[i]){
+        tehuda[i] = drow;
+      }
+      drop(drop_id);
+
+      if(drop_id == 10){
+        yamahuda = [];
+      }
+
+      io.to(ids[turn]).emit('server_to_client_1_comp');
+      if(yamahuda.length > 0){
+        turn_draw();
+      }
+    });
+    
     // roomへの入室は、「socket.join(room名)」
+    // 2人入ったらgame start
     socket.on('client_to_server_join', function(data) {
         room = data.value;
         socket.join(room);
+
+        if(ids.length == 2){
+          set();
+
+          var p1 = yamahuda.shift();
+          tehuda.push(p1);
+          var p2 = yamahuda.shift();
+          tehuda.push(p2);
+
+          io.to(ids[0]).emit('server_to_client_set_up',{value : tehuda[0]});
+          io.to(ids[1]).emit('server_to_client_set_up',{value : tehuda[1]});
+
+          //game start
+          drow = yamahuda.shift();
+          
+          if(turn == 0){
+            io.to(ids[0]).emit('server_to_client_drow',{value : drow});
+            io.to(ids[0]).emit('server_to_client_turn',{value : turn_text});
+            io.to(ids[1]).emit('server_to_client_drow_enemy');
+          }else{
+            io.to(ids[1]).emit('server_to_client_drow',{value : drow});
+            io.to(ids[1]).emit('server_to_client_turn',{value : turn_text});
+            io.to(ids[0]).emit('server_to_client_drow_enemy');
+          }
+
+          // turn = turn == 0 ? 1 : 0;
+        }
+
     });
     // S05. client_to_serverイベント・データを受信する
     socket.on('client_to_server', function(data) {
@@ -84,29 +376,6 @@ io.sockets.on('connection', function(socket) {
         var personalMessage = "あなたは、" + name + "さんとして入室しました。"
         io.to(id).emit('server_to_client', {value : personalMessage});
 
-        // first turn step
-        if(ids.length == 2){
-          set();
-
-          p0 = draw();
-          p1 = draw();
-
-          console.log(yamahuda);
-          console.log(p0);
-          console.log(p1);
-
-
-          if(first_turn == 0){
-            io.to(ids[0]).emit('server_to_client_card',{value : p0});
-            io.to(ids[0]).emit('server_to_client', {value : first});
-            io.to(ids[1]).emit('server_to_client_card',{value : p1});
-          }else{
-            io.to(ids[0]).emit('server_to_client_card',{value : p0});
-            io.to(ids[1]).emit('server_to_client_card',{value : p1});
-            io.to(ids[1]).emit('server_to_client',{value : first});
-          }
-
-        } 
     });
     // S09. dicconnectイベントを受信し、退出メッセージを送信する
     socket.on('disconnect', function() {

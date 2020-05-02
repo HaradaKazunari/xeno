@@ -11,91 +11,270 @@
 
     <style>
         img{
-          width:270px;
-          height:auto;
+          width: 240px;
+          height: auto;
         }
-        #yamahuda{
-          width:100%;
-        }
-
-        #yamahuda img{
+        #field img{
           transform: rotate(90deg);
-          margin-left: 34%;
-          position: relative;
-          bottom: -40px;
         }
-
-        #player,#aite{
-          width: 70%;
-          margin: 0 auto;
+        .drop img{
+          opacity: .85;
         }
-
-        #player_drop,#aite_drop{
-          width:100%;
-          height:107px;
+        #enemy_drop{
+          display: flex;
+          justify-content: flex-end;
         }
-
-        .sutehuda{
-          position: relative;
-          z-index: -1;
-          opacity: .8;
-        }
-
-        #aite_drop img{
-          position: relative;
-          top:-240px;
-        }
-        #aite_drop img{
+        #enemy_drop img{
           transform: rotate(180deg);
+          position: relative;
         }
+        #player_drop{
+          display: flex;
+          justify-content: flex-start;
+        }
+        #player_drop img{
+          position: relative;
+        }
+        #efecto_select{
+          position: relative;
+          display: flex;
+          justify-content: space-between;
+        }
+
     </style>
 
 </head>
 <body>
     <div class="container">
-        <h1>WebSocket-Chat</h1>
-        <form class="form-inline">
+        <h1 class="text-center">ONLINE XENO</h1>
+        <form class="form-inline text-center" id="chat_form">
             <div class="form-group">
                 <label class="roomLabel" for="rooms">部屋：</label>
                 <select class="form-control" id="rooms">
                     <option value="room01">部屋01</option>
-                    <option value="room02">部屋02</option>
                 </select>
                 <label class="nameLabel" for="msgForm">名前：</label>
                 <input type="text" class="form-control" id="msgForm">
             </div>
             <button type="submit" class="btn btn-primary" id="sendButton">入室</button>
         </form>
-        <div id="chatLogs"></div>
-    </div>
-
-    <div id="game">
-      <div id="aite">
-
-      </div>
-
-      <div id="aite_drop">
-
-      </div>
-
-      <div id="yamahuda">
-
-      </div>
-
-      <div id="player_drop">
-
-      </div>
-
-      <div id="player">
-
-      </div>
+        <div id="chatLogs" class="text-center"></div>
+        <div id="enemy" class="text-center"></div>
+        <div id="enemy_drop" class="drop"></div>
+        <div id="field" class="text-center"></div>
+        <div id="player_drop" class="drop"></div>
+        <div id="turn" class="text-center"></div>
+        <div id="efecto_select" class="text-center"></div>
+        <div id="player" class="text-center"></div>
     </div>
  
     <script type="text/javascript">
         var socket = io.connect(); // C02. ソケットへの接続
         var isEnter = false;
         var name = '';
-        var img_count = 0;
+        var img_order = 0;
+        var img_my_drop = 0;
+
+
+        //xeno
+        //setup
+        socket.on('server_to_client_set_up',function(data){
+          var card = data.value;
+          var append = '<img src="img/'+ card +'.jpg" id="my_'+ card +'">';
+          $('#enemy').append('<img src="img/ura.png">');
+          $('#field').append('<img src="img/ura.png">');
+          $('#player').append(append);
+        });
+
+        //転生
+        socket.on('server_to_client_tensei', function(data){
+          var card = data.value;
+          var append = '<img src="img/'+ card +'.jpg" id="my_'+ card +'">';
+          $('#player').empty();
+          $('#player').append(append);
+        });
+
+        //drow
+        socket.on('server_to_client_drow',function(data){
+          var card = data.value;
+          var append = '<img src="img/'+ card +'.jpg" id="my_'+ card +'">';
+          $('#player').append(append);
+        });
+        socket.on('server_to_client_turn',function(data){
+          var text = data.value;
+          $("#turn").append(text);
+        });
+        //相手側
+        socket.on('server_to_client_drow_enemy',function(){
+          $('#enemy').append('<img src="img/ura.png">');
+        });
+
+        //drop
+        $(document).on('click','#player img',function(){
+            var card_id = Number($(this).attr('id').substr(3));
+            socket.emit("client_to_server_drop", {value : card_id});
+        });
+        //自分側
+        socket.on('server_to_client_my_card_drop', function(data){
+          var card_id = data.tehuda;
+          var drop_id = data.value;
+          img_my_drop += 1;
+          $("#turn").text('');
+          $("#player").empty();
+          $("#player").append('<img src="img/'+ card_id  +'.jpg" id="my_'+ card_id  +'">');
+          $("#player_drop").append('<img src="img/'+ drop_id  +'.jpg" style="left:-'+ 120*(img_my_drop - 1)  +'px;">');
+        });
+        //相手側
+        socket.on('server_to_client_drop', function(data){
+          var card_id = data.value;
+          img_order += 1;
+          $('#enemy_drop').prepend('<img src="img/'+ card_id  +'.jpg" style="z-index:'+ img_order  +'; right:-'+ 120*(img_order - 1)  +'px">');
+          $('#enemy img').eq(1).detach();
+        });
+
+        //カード効果1
+        socket.on('server_to_client_1',function(data){
+          var tehuda1 = data.tehuda1;
+          var tehuda2 = data.tehuda2;
+          $("#enemy").empty();
+          $("#enemy").append('<img src="img/'+ tehuda1 +'.jpg">');
+          $("#enemy").append('<img src="img/'+ tehuda2 +'.jpg">');
+          $("#turn").append('<button class="btn btn-info card_efecto_1" id="'+ tehuda1+'">Left</button>');
+          $("#turn").append('<button class="btn btn-info card_efecto_1" id="'+ tehuda2+'">Left</button>');
+        });
+        
+        //カード効果1,5終了
+        $(document).on('click','#turn .card_efecto_1',function(){
+          var drop = Number($(this).attr('id'));
+          $("#turn").empty();
+          socket.emit('client_to_server_1',{value : drop});
+        });
+        socket.on('server_to_client_1_comp',function(){
+          $("#enemy").empty();
+          $('#enemy').append('<img src="img/ura.png">');
+        });
+    
+        //カード効果2
+        socket.on('server_to_client_2', function(){
+          var set = '<form class="form-inline" id="efecto_2">';
+          set += '<div class="form-froup">'
+          set += '<label class="numberLabel" for="numbers">数字選択：</label>';
+          set += '<select class="form-control" id="numbers">';
+          set += '<option value="1">1</option>';
+          set += '<option value="2">2</option>';
+          set += '<option value="3">3</option>';
+          set += '<option value="4">4</option>';
+          set += '<option value="5">5</option>';
+          set += '<option value="6">6</option>';
+          set += '<option value="7">7</option>';
+          set += '<option value="8">8</option>';
+          set += '<option value="9">9</option>';
+          set += '<option value="10">10</option>';
+          set += '</select>';
+          set += '</div>';
+          set += '<button type="submit" class="btn btn-primary" id="sendNumber">決定</button>';
+          set += '</form>';
+          $("#turn").append(set);
+        });
+        //カード効果2終了
+        $(document).on('submit','#efecto_2',function(e){
+            var selectNumber = $("#numbers").val();
+            socket.emit('client_to_server_2',{value : selectNumber});
+            $("#turn").empty();
+            e.preventDefault();
+        });
+        socket.on('server_to_client_2_comp', function(data){
+          var card_id = data.value;
+          $("#enemy").empty();
+          $('#enemy').append('<img src="img/'+ card_id  +'.jpg">');
+        }); 
+
+        //カード効果3
+        socket.on('server_to_client_3',function(data){
+          var card_id = data.value;
+          $("#enemy").empty();
+          $('#enemy').append('<img src="img/'+ card_id  +'.jpg">');
+          $('#turn').append('<button class="btn btn-info card_efecto_3">OK</button>')
+        });
+
+        //カード効果3終了
+        $(document).on('click','#turn .card_efecto_3',function(){
+          $("#enemy").empty();
+          $('#enemy').append('<img src="img/ura.png">');
+          $("#turn").empty();
+          socket.emit('client_to_server_3');
+        });
+
+        //カード効果5
+        socket.on('server_to_client_5',function(data){
+          var tehuda1 = data.tehuda1;
+          var tehuda2 = data.tehuda2;
+          $("#enemy").empty();
+          $('#enemy').append('<img src="img/ura.png">');
+          $('#enemy').append('<img src="img/ura.png">');
+          $("#turn").append('<button class="btn btn-info card_efecto_1" id="'+ tehuda1+'">Left</button>');
+          $("#turn").append('<button class="btn btn-info card_efecto_1" id="'+ tehuda2+'">Left</button>');
+        });
+
+        //カード効果6
+        socket.on('server_to_client_6', function(data){
+          var card_id = data.value;
+          var hantei = data.hantei;
+          $("#enemy").empty();
+          $('#enemy').append('<img src="img/'+ card_id  +'.jpg">');
+          $("#turn").append('<button class="btn btn-info" value="'+ hantei +'"  id="card_efecto_6">OK</button>');
+        }); 
+        $(document).on('click','#card_efecto_6',function(){
+          var hantei = Number($(this).attr('value'));
+          $("#turn").empty();
+          socket.emit('client_to_server_6');
+          if(hantei != 2){
+            $("#enemy").empty();
+            $('#enemy').append('<img src="img/ura.png">');
+          }
+        });
+        
+        //カード効果7
+        socket.on('server_to_client_7',function(data){
+          var efecto_draw = data.value;
+          $('#efecto_select').append('<img src="img/'+ efecto_draw.efecto_7_1  +'.jpg" id="1">');
+          $('#efecto_select').append('<img src="img/'+ efecto_draw.efecto_7_2  +'.jpg" id="2">');
+          $('#efecto_select').append('<img src="img/'+ efecto_draw.efecto_7_3  +'.jpg" id="3">');
+        });
+        //カード効果7終了
+        $(document).on('click','#efecto_select img',function(){
+          var selected = Number($(this).attr('id'));
+          console.log(selected);
+          socket.emit('client_to_server_7',{value : selected});
+          $("#efecto_select").empty();
+        });
+
+
+        //カード効果8
+        socket.on('server_to_client_8',function(data){
+          var card = data.value;
+          var append = '<img src="img/'+ card +'.jpg" id="my_'+ card +'">';
+          $("#player").empty();
+          $('#player').append(append);
+        });
+
+        //カード効果9
+        socket.on('server_to_client_9',function(data){
+          var tehuda1 = data.tehuda1;
+          var tehuda2 = data.tehuda2;
+          $("#enemy").empty();
+          $("#enemy").append('<img src="img/'+ tehuda1 +'.jpg">');
+          $("#enemy").append('<img src="img/'+ tehuda2 +'.jpg">');
+          $("#turn").append('<button class="btn btn-info card_efecto_9" id="'+ tehuda1+'">Left</button>');
+          $("#turn").append('<button class="btn btn-info card_efecto_9" id="'+ tehuda2+'">Left</button>');
+        });
+        
+        //カード効果9終了
+        $(document).on('click','#turn .card_efecto_9',function(){
+          var drop = Number($(this).attr('id'));
+          $("#turn").empty();
+          socket.emit('client_to_server_9',{value : drop});
+        });
 
  
         // C04. server_to_clientイベント・データを受信する
@@ -103,34 +282,8 @@
         function appendMsg(text) {
             $("#chatLogs").append("<div>" + text + "</div>");
         }
-
-        socket.on("server_to_client_card", function(data){
-          var card = data.value;
-          img_count += 1;
-          $("#aite").append('<img src="img/ura.png" alt="">');
-          $("#yamahuda").append('<img src="img/ura.png" id="tensei"  alt="">');
-          $("#player").append('<img src="img/' + card + '.jpg" id="' + card  + '" class="player_card">');
-        });
-
-        socket.on("server_to_client_card_drop_player", function(data){
-          var card_id = data.value;
-          $("#player_drop").append('<img src="img/' + card_id  + '.jpg" class="sutehuda">');
-        });
-
-        socket.on("server_to_client_card_drop_aite", function(data){
-          var card_id = data.value;
-          $("#aite_drop").append('<img src="img/' + card_id  + '.jpg" class="sutehuda">');
-        });
-  
-
-
-        $(document).on('click','#player img',function(){
-            var card_id = Number($(this).attr('id'));
-            socket.emit("client_to_server_card_drop", {value : card_id});
-        });
-
  
-        $("form").submit(function(e) {
+        $("#chat_form").submit(function(e) {
             var message = $("#msgForm").val();
             var selectRoom = $("#rooms").val();
             $("#msgForm").val('');
@@ -141,11 +294,11 @@
             } else {
                 name = message;
                 var entryMessage = name + "さんが入室しました。";
-                socket.emit("client_to_server_join", {value : selectRoom});
                 // C05. client_to_server_broadcastイベント・データを送信する
                 socket.emit("client_to_server_broadcast", {value : entryMessage});
                 // C06. client_to_server_personalイベント・データを送信する
                 socket.emit("client_to_server_personal", {value : name});
+                socket.emit("client_to_server_join", {value : selectRoom});
                 changeLabel();
             }
             e.preventDefault();
