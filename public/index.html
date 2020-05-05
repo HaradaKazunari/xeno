@@ -90,6 +90,7 @@
         socket.on('server_to_client_tensei', function(data){
           var card = data.value;
           var append = '<img src="img/'+ card +'.jpg" id="my_'+ card +'">';
+          $('#field').empty();
           $('#player').empty();
           $('#player').append(append);
         });
@@ -266,7 +267,7 @@
           $("#enemy").append('<img src="img/'+ tehuda1 +'.jpg">');
           $("#enemy").append('<img src="img/'+ tehuda2 +'.jpg">');
           $("#turn").append('<button class="btn btn-info card_efecto_9" id="'+ tehuda1+'">Left</button>');
-          $("#turn").append('<button class="btn btn-info card_efecto_9" id="'+ tehuda2+'">Left</button>');
+          $("#turn").append('<button class="btn btn-info card_efecto_9" id="'+ tehuda2+'">Right</button>');
         });
         
         //カード効果9終了

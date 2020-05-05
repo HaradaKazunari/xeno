@@ -117,87 +117,94 @@ io.sockets.on('connection', function(socket) {
           }
         }
 
-        if(drop_id == 1 && efecto_4 == false){
-          //皇帝
-          var jud = sutehuda_card_check(drop_id);
-            if(jud == true){
-              drow = yamahuda.shift();
+        if(yamahuda.lentgth != 0){
+          if(drop_id == 1 && efecto_4 == false){
+            //皇帝
+            var jud = sutehuda_card_check(drop_id);
+              if(jud == true){
+                drow = yamahuda.shift();
 
-              var t = turn == 0 ? 1:0;
-              io.to(socket.id).emit('server_to_client_1',{tehuda1 : tehuda[t], tehuda2 : drow})
-              io.to(ids[t]).emit('server_to_client_drow',{value : drow});
-              
-              efecto = true;
-            }
+                var t = turn == 0 ? 1:0;
+                io.to(socket.id).emit('server_to_client_1',{tehuda1 : tehuda[t], tehuda2 : drow})
+                io.to(ids[t]).emit('server_to_client_drow',{value : drow});
+                
+                efecto = true;
+              }
 
-        }else if(drop_id == 2 && efecto_4 == false){
-          //捜査
-          io.to(ids[turn]).emit('server_to_client_2');
-          efecto = true;
+          }else if(drop_id == 2 && efecto_4 == false){
+            //捜査
+            io.to(ids[turn]).emit('server_to_client_2');
+            efecto = true;
 
-        }else if(drop_id == 3 && efecto_4 == false){
-          //透視
-          var i = turn == 0 ? 1:0;
-          io.to(ids[turn]).emit('server_to_client_3',{value : tehuda[i]});
-          efecto = true;
-          
-        }else if(drop_id == 4){
-          //守護
-          efecto_4 = true;
-          efecto_4_check = 0;
+          }else if(drop_id == 3 && efecto_4 == false){
+            //透視
+            var i = turn == 0 ? 1:0;
+            io.to(ids[turn]).emit('server_to_client_3',{value : tehuda[i]});
+            efecto = true;
+            
+          }else if(drop_id == 4){
+            //守護
+            efecto_4 = true;
+            efecto_4_check = 0;
 
-        }else if(drop_id == 5 && efecto_4 == false){
-          //疫病
-          drow = yamahuda.shift();
+          }else if(drop_id == 5 && efecto_4 == false){
+            //疫病
+            drow = yamahuda.shift();
 
-          var t = turn == 0 ? 1:0;
-          io.to(socket.id).emit('server_to_client_5',{tehuda1 : tehuda[t], tehuda2 : drow})
-          io.to(ids[t]).emit('server_to_client_drow',{value : drow});
-          
-          efecto = true;
+            var t = turn == 0 ? 1:0;
+            io.to(socket.id).emit('server_to_client_5',{tehuda1 : tehuda[t], tehuda2 : drow})
+            io.to(ids[t]).emit('server_to_client_drow',{value : drow});
+            
+            efecto = true;
 
-        }else if(drop_id == 6 && efecto_4 == false){
-          //対決
-          var drop_6 = 1;
-          var jud = sutehuda_card_check(drop_id);
-            if(jud == true){
-              yamahuda = []
-              drop_6 = 2;
-            }
+          }else if(drop_id == 6 && efecto_4 == false){
+            //対決
+            var drop_6 = 1;
+            var jud = sutehuda_card_check(drop_id);
+              if(jud == true){
+                yamahuda = []
+                drop_6 = 2;
+              }
 
-          var t = turn == 0 ? 1:0;
-          io.to(ids[turn]).emit('server_to_client_6',{value : tehuda[t], hantei:drop_6})
-          io.to(ids[t]).emit('server_to_client_6',{value : tehuda[turn], hantei:drop_6});
-
-
-          efecto = true;
-
-        }else if(drop_id == 7){
-          //賢者
-          efecto_7 = [turn];
+            var t = turn == 0 ? 1:0;
+            io.to(ids[turn]).emit('server_to_client_6',{value : tehuda[t], hantei:drop_6})
+            io.to(ids[t]).emit('server_to_client_6',{value : tehuda[turn], hantei:drop_6});
 
 
-        }else if(drop_id == 8 && efecto_4 == false){
-          //精霊
-          tehuda.push(tehuda.shift());
-          var i = turn == 0 ? 1:0;
-          io.to(ids[turn]).emit('server_to_client_8',{value : tehuda[turn]});
-          io.to(ids[i]).emit('server_to_client_8',{value : tehuda[i]});
+            efecto = true;
 
-        }else if(drop_id == 9 && efecto_4 == false){
-          //皇帝
-          drow = yamahuda.shift();
+          }else if(drop_id == 7){
+            //賢者
+            efecto_7 = [turn];
 
-          var t = turn == 0 ? 1:0;
-          io.to(socket.id).emit('server_to_client_9',{tehuda1 : tehuda[t], tehuda2 : drow})
-          io.to(ids[t]).emit('server_to_client_drow',{value : drow});
-          
-          efecto = true;
 
-        }
+          }else if(drop_id == 8 && efecto_4 == false){
+            //精霊
+            tehuda.push(tehuda.shift());
+            var i = turn == 0 ? 1:0;
+            io.to(ids[turn]).emit('server_to_client_8',{value : tehuda[turn]});
+            io.to(ids[i]).emit('server_to_client_8',{value : tehuda[i]});
 
-        if(yamahuda.length > 0 && efecto == false){
-          turn_draw();
+          }else if(drop_id == 9 && efecto_4 == false){
+            //皇帝
+            drow = yamahuda.shift();
+
+            var t = turn == 0 ? 1:0;
+            io.to(socket.id).emit('server_to_client_9',{tehuda1 : tehuda[t], tehuda2 : drow})
+            io.to(ids[t]).emit('server_to_client_drow',{value : drow});
+            
+            efecto = true;
+
+          }
+
+          if(efecto == false){
+            turn_draw();
+          }
+
+        }else if(yamahuda.length == 0){
+            var t = turn == 0 ? 1:0;
+            io.to(ids[turn]).emit('server_to_client_2_comp',{value : tehuda[t]});
+            io.to(ids[t]).emit('server_to_client_2_comp',{value : tehuda[turn]});
         }
 
       }
