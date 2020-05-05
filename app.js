@@ -237,6 +237,13 @@ io.sockets.on('connection', function(socket) {
       efecto = false;
       var select = data.value;
       var i = turn == 0 ? 1:0;
+
+      function drop(drop){
+        sutehuda.push(drop);
+        io.to(ids[i]).emit('server_to_client_my_card_drop',{value : drop, tehuda : tehuda[i]});
+        io.to(ids[turn]).emit('server_to_client_drop',{value : drop});
+
+      }
       
 
       if(tehuda[i] == select){
