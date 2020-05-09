@@ -86,11 +86,25 @@
           $('#player').append(append);
         });
 
+        //残り枚数
+        socket.on('server_to_client_number_of_yamahuda',function(data){
+          var nokori = data.value;
+          $('#field h4').remove();
+          $("#field").append('<h4>残り:'+ nokori +'枚</h4>');
+        });
+
+        //終了
+        socket.on('server_to_client_finish',function(data){
+          var fin = data.value;
+          $('#turn').empty();
+          $('#turn').append('<h3>'+ fin +'</h3>');
+        });
+
         //転生
         socket.on('server_to_client_tensei', function(data){
           var card = data.value;
           var append = '<img src="img/'+ card +'.jpg" id="my_'+ card +'">';
-          $('#field').empty();
+          $('#field img').remove();
           $('#player').empty();
           $('#player').append(append);
         });
@@ -130,7 +144,8 @@
           var card_id = data.value;
           img_order += 1;
           $('#enemy_drop').prepend('<img src="img/'+ card_id  +'.jpg" style="z-index:'+ img_order  +'; right:-'+ 120*(img_order - 1)  +'px">');
-          $('#enemy img').eq(1).detach();
+          $('#enemy').empty();
+          $('#enemy').append('<img src="img/ura.png">');
         });
 
         //カード効果1
@@ -214,7 +229,7 @@
           $('#enemy').append('<img src="img/ura.png">');
           $('#enemy').append('<img src="img/ura.png">');
           $("#turn").append('<button class="btn btn-info card_efecto_1" id="'+ tehuda1+'">Left</button>');
-          $("#turn").append('<button class="btn btn-info card_efecto_1" id="'+ tehuda2+'">Left</button>');
+          $("#turn").append('<button class="btn btn-info card_efecto_1" id="'+ tehuda2+'">Right</button>');
         });
 
         //カード効果6
