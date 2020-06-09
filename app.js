@@ -70,8 +70,8 @@ io.sockets.on('connection', function(socket) {
       if(tehuda[0] == tehuda[1]){
         io.to(room).emit('server_to_client_finish',{value : 'drow'})
       }else{
-        var player1 = tehuda[0] > tehuda[1] ? 'win':'lose';
-        var player2 = tehuda[0] < tehuda[1] ? 'win':'lose';
+        var player1 = tehuda[0] > tehuda[1] ? 'your win':'your lose';
+        var player2 = tehuda[0] < tehuda[1] ? 'your win':'your lose';
 
         io.to(ids[0]).emit('server_to_client_finish',{value : player1});
         io.to(ids[1]).emit('server_to_client_finish',{value : player2});
@@ -181,10 +181,10 @@ io.sockets.on('connection', function(socket) {
             //対決
             var drop_6 = 1;
             var jud = sutehuda_card_check(drop_id);
-              if(jud == true){
-                yamahuda = []
-                drop_6 = 2;
-              }
+            if(jud == true){
+              yamahuda = []
+              drop_6 = 2;
+            }
 
             var t = turn == 0 ? 1:0;
             io.to(ids[turn]).emit('server_to_client_6',{value : tehuda[t], hantei:drop_6})
@@ -274,8 +274,8 @@ io.sockets.on('connection', function(socket) {
           io.to(ids[turn]).emit('server_to_client_2_comp',{value : tehuda[i]});
           io.to(ids[i]).emit('server_to_client_2_comp',{value : tehuda[turn]});
 
-          io.to(ids[turn]).emit('server_to_client_finish',{value : 'win'});
-          io.to(ids[i]).emit('server_to_client_finish',{value : 'lose'});
+          io.to(ids[turn]).emit('server_to_client_finish',{value : 'your win'});
+          io.to(ids[i]).emit('server_to_client_finish',{value : 'your lose'});
         }
       }
 
@@ -358,8 +358,8 @@ io.sockets.on('connection', function(socket) {
         io.to(ids[turn]).emit('server_to_client_2_comp',{value : tehuda[i]});
         io.to(ids[i]).emit('server_to_client_2_comp',{value : tehuda[turn]});
 
-        io.to(ids[turn]).emit('server_to_client_finish',{value : 'win'});
-        io.to(ids[i]).emit('server_to_client_finish',{value : 'lose'});
+        io.to(ids[turn]).emit('server_to_client_finish',{value : 'your win'});
+        io.to(ids[i]).emit('server_to_client_finish',{value : 'your lose'});
       }
 
       io.to(ids[turn]).emit('server_to_client_1_comp');
